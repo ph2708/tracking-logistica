@@ -132,6 +132,14 @@
                                             Roteirizar
                                         </button>
                                     @endif
+                                    @if($c->status === 'pendente_coleta' || $c->status === 'em_transporte')
+                                        <form action="{{ route('logistica.manual-close', $c->id) }}" method="POST" onsubmit="return confirm('Deseja realmente dar baixa manual nesta coleta?')" style="display:inline;">
+                                            @csrf
+                                            <button type="submit" class="btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.875rem; border-color: var(--accent-green); color: var(--accent-green); background: rgba(52,211,153,0.05);">
+                                                Baixa Manual
+                                            </button>
+                                        </form>
+                                    @endif
                                 </div>
                             </td>
                         </tr>
@@ -199,6 +207,14 @@
                                         <button class="btn-primary" style="padding: 0.35rem 0.75rem; font-size: 0.875rem;" onclick="openShipModal({{ json_encode($e) }})">
                                             Roteirizar
                                         </button>
+                                    @endif
+                                    @if(($e->status === 'pendente_entrega' && $e->driver_id) || $e->status === 'em_transporte')
+                                        <form action="{{ route('logistica.manual-close', $e->id) }}" method="POST" onsubmit="return confirm('Deseja realmente dar baixa manual nesta entrega?')" style="display:inline;">
+                                            @csrf
+                                            <button type="submit" class="btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.875rem; border-color: var(--accent-green); color: var(--accent-green); background: rgba(52,211,153,0.05);">
+                                                Baixa Manual
+                                            </button>
+                                        </form>
                                     @endif
                                 </div>
                             </td>

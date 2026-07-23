@@ -25,6 +25,8 @@ class Tracking extends Model
         'collection_schedule',
         'departure_time',
         'completion_time',
+        'delivery_photo_product',
+        'delivery_photo_invoice',
     ];
 
     protected $casts = [

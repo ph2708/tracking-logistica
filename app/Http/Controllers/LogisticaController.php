@@ -94,4 +94,31 @@ class LogisticaController extends Controller
         $tracking = Tracking::findOrFail($id);
         return view('logistica.qrcode', compact('tracking'));
     }
+
+    public function manualClose($id)
+    {
+        $tracking = Tracking::findOrFail($id);
+
+        if ($tracking->status === 'entregue' || $tracking->status === 'coleta_finalizada') {
+            return back()->with('error', 'Esta operação já está concluída.');
+        }
+
+        $newStatus = ($tracking->type === 'entrega') ? 'entregue' : 'coleta_finalizada';
+
+        $tracking->update([
+            'status' => $newStatus,
+            'completion_time' => now(),
+            'observations_logistics' => 'Baixa Manual efetuada pela Logística (Operador: ' . auth()->user()->name . ').'
+        ]);
+
+        StatusLog::create([
+            'tracking_id' => $tracking->id,
+            'status' => $newStatus,
+            'user_id' => auth()->id(),
+            'latitude' => null,
+            'longitude' => null,
+        ]);
+
+        return back()->with('success', 'Baixa manual efetuada com sucesso!');
+    }
 }

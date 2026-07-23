@@ -41,6 +41,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/route', [LogisticaController::class, 'routeOrder'])->name('route');
         Route::post('/ship', [LogisticaController::class, 'shipOrder'])->name('ship');
         Route::get('/tracking/{id}/qrcode', [LogisticaController::class, 'printQRCode'])->name('qrcode');
+        Route::post('/tracking/{id}/manual-close', [LogisticaController::class, 'manualClose'])->name('manual-close');
     });
 
     // Motorista (Driver) Panel

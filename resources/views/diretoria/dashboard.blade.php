@@ -227,6 +227,12 @@
                                         @if($t->completion_time)
                                             <p><strong>Horário de Conclusão:</strong> {{ $t->completion_time->format('d/m/Y H:i') }}</p>
                                         @endif
+                                        @if($t->delivery_photo_product)
+                                            <p><strong>Foto do Produto:</strong> <a href="{{ Storage::url($t->delivery_photo_product) }}" target="_blank" style="color: var(--accent-blue); text-decoration: none;"><i class="bi bi-image"></i> Ver Foto</a></p>
+                                        @endif
+                                        @if($t->delivery_photo_invoice)
+                                            <p><strong>Foto da Nota Fiscal:</strong> <a href="{{ Storage::url($t->delivery_photo_invoice) }}" target="_blank" style="color: var(--accent-blue); text-decoration: none;"><i class="bi bi-image"></i> Ver Foto</a></p>
+                                        @endif
                                     </div>
                                     <div>
                                         <h4 style="margin-bottom: 0.5rem; color: var(--accent-blue);">Linha do Tempo (Logs de Status)</h4>

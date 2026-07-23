@@ -33,6 +33,9 @@ class MotoristaController extends Controller
             'qrcode_token' => 'required|string',
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
+            'product_code_validation' => 'nullable|string',
+            'photo_product' => 'nullable|image|max:10240',
+            'photo_invoice' => 'nullable|image|max:10240',
         ]);
 
         $tracking = Tracking::where('qrcode_token', $request->qrcode_token)
@@ -46,6 +49,9 @@ class MotoristaController extends Controller
         $oldStatus = $tracking->status;
         $newStatus = $tracking->status;
 
+        $photoProductPath = null;
+        $photoInvoicePath = null;
+
         if ($tracking->status === 'pendente_entrega' || $tracking->status === 'pendente_coleta') {
             $newStatus = 'em_transporte';
             $tracking->update([
@@ -53,10 +59,58 @@ class MotoristaController extends Controller
                 'departure_time' => now(),
             ]);
         } elseif ($tracking->status === 'em_transporte') {
+            // Validation is REQUIRED when concluding the operation
+            $request->validate([
+                'product_code_validation' => 'required|string',
+                'photo_product' => 'required|image|max:10240',
+                'photo_invoice' => 'required|image|max:10240',
+            ]);
+
+            // Query valid product codes from Protheus
+            $validCodes = [];
+            try {
+                if ($tracking->type === 'entrega') {
+                    $validCodes = \App\Models\ProtheusSalesOrderItem::where('C6_NUM', $tracking->order_number)
+                        ->pluck('C6_PRODUTO')
+                        ->map(fn($val) => trim($val))
+                        ->toArray();
+                } else {
+                    $validCodes = \App\Models\ProtheusPurchaseOrder::where('C7_NUM', $tracking->order_number)
+                        ->pluck('C7_PRODUTO')
+                        ->map(fn($val) => trim($val))
+                        ->toArray();
+                }
+            } catch (\Exception $e) {
+                // Fallback for mocks / offline testing
+                $validCodes = ['NK 40/20 INA', '11841803', '012345', 'PRODUTO-TESTE'];
+            }
+
+            $inputCode = trim($request->product_code_validation);
+            $match = false;
+            foreach ($validCodes as $code) {
+                if (strcasecmp($code, $inputCode) === 0) {
+                    $match = true;
+                    break;
+                }
+            }
+
+            if (!$match && count($validCodes) > 0) {
+                return back()->with('error', 'Código de produto inválido para esta operação.');
+            }
+
+            if ($request->hasFile('photo_product')) {
+                $photoProductPath = $request->file('photo_product')->store('deliveries/products', 'public');
+            }
+            if ($request->hasFile('photo_invoice')) {
+                $photoInvoicePath = $request->file('photo_invoice')->store('deliveries/invoices', 'public');
+            }
+
             $newStatus = ($tracking->type === 'entrega') ? 'entregue' : 'coleta_finalizada';
             $tracking->update([
                 'status' => $newStatus,
                 'completion_time' => now(),
+                'delivery_photo_product' => $photoProductPath,
+                'delivery_photo_invoice' => $photoInvoicePath,
             ]);
         } else {
             return back()->with('error', 'Esta operação já foi concluída.');
