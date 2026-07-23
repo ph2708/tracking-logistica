@@ -67,3 +67,34 @@ O banco local possui os seguintes perfis cadastrados para simulação de fluxo o
 2. **Transições Inteligentes no Motorista**: O motorista apenas escaneia/informa o QR Code e o sistema automaticamente atualiza o status correto baseado na etapa (`Pendente` $\to$ `Em Transporte` $\to$ `Concluído`) sem necessidade de interação extra do usuário.
 3. **Geolocalização Ativa (GPS)**: Utiliza a Geolocation API do navegador do motorista na confirmação do QR Code e salva as coordenadas geográficas na linha do tempo da operação.
 4. **Links Diretos p/ Google Maps**: A Diretoria e o Cliente Final conseguem clicar no histórico de status e abrir a rota exata de onde o motorista coletou ou entregou o pedido.
+
+---
+
+## 🛠️ Solução de Problemas Comuns / Setup Inicial
+
+### 1. Erro de Conexão Recusada (`Connection refused` no MySQL)
+Ao subir os containers pela primeira vez (`docker compose up -d`), o MySQL pode demorar de 10 a 15 segundos para inicializar completamente e aceitar conexões.
+- **Solução**: Se o comando `migrate:fresh` falhar com `Connection refused`, aguarde alguns segundos e tente novamente.
+
+### 2. Permissões de Escrita no Storage e Cache
+Caso ocorram erros de escrita de arquivos ou pastas ausentes dentro do container:
+```bash
+# Criar os diretórios internos necessários do Laravel
+docker compose exec app mkdir -p storage/framework/views storage/framework/cache/data storage/framework/sessions
+
+# Ajustar as permissões de escrita dentro do container
+docker compose exec app chmod -R 777 storage bootstrap/cache
+```
+
+### 3. Chave de Criptografia Ausente (`APP_KEY`)
+Caso a aplicação exiba erro por falta de chave do Laravel:
+```bash
+docker compose exec app php artisan key:generate
+```
+
+### 4. Limpeza de Caches
+Sempre que alterar variáveis de ambiente no `.env` ou atualizar templates Blade e não ver as alterações na tela:
+```bash
+docker compose exec app php artisan config:clear
+docker compose exec app php artisan view:clear
+```

@@ -30,9 +30,9 @@ services:
     ports:
       - "3306:3306"
     environment:
-      MYSQL_DATABASE: tracking_dashboard
-      MYSQL_ROOT_PASSWORD: 'Tr4ck1ng_S3cur3_Db_2026!'
-      MYSQL_PASSWORD: 'Tr4ck1ng_S3cur3_Db_2026!'
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
     volumes:
       - db-data:/var/lib/mysql
     networks:
