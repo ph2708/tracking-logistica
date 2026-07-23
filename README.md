@@ -1,58 +1,69 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Sistema de Rastreamento de Pedidos e Roteirização Logística
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Sistema moderno de rastreamento de entregas (Pedidos de Venda) e coletas (Pedidos de Compra) com integração em tempo real ao banco de dados do **TOTVS Protheus (SQL Server)**, controle de fluxos logísticos operacionais, simulação de leitura de QR Code em rota com captura de geolocalização e dashboards gerenciais.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 🚀 Arquitetura e Tecnologias
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- **Framework**: Laravel 11 (PHP 8.4-fpm)
+- **Banco de Dados Local**: MySQL 8.0 (persiste as operações do painel logístico)
+- **Banco de Dados ERP**: Microsoft SQL Server (MP_12 - Tabelas do Protheus)
+- **Infraestrutura**: Docker (Nginx, PHP com drivers Microsoft ODBC compilados e MySQL)
+- **Estilização**: CSS Vanilla com design responsivo (Dark/Glassmorphism) e ícones Bootstrap
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
 
-## Learning Laravel
+## 📦 Estrutura de Tabelas Protheus Consultadas (Read-Only)
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+- **Pedido de Venda (Cabeçalho)**: Tabela `SC5010` (Chave `C5_NUM`)
+- **Pedido de Venda (Itens)**: Tabela `SC6010` (Chave `C6_NUM`)
+- **Pedido de Compra**: Tabela `SC7010` (Chave `C7_NUM`)
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+> [!NOTE]
+> Todas as consultas de integração do Protheus filtram automaticamente registros deletados logicamente (`D_E_L_E_T_ = ' '`). O sistema conta com fallback inteligente de dados simulados (mock) caso o banco do Protheus esteja offline.
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+---
 
-## Agentic Development
+## 🛠️ Instalação e Execução
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
-
+### 1. Iniciar os Containers Docker
+Certifique-se de que sua VPN local está ativa se for testar a conexão real com o Protheus.
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+docker compose up -d --build
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+### 2. Executar as Migrações e Seeds (Banco Local)
+Este comando criará o esquema do banco de dados local do dashboard e carregará os usuários padrão para testes operacionais:
+```bash
+docker compose exec app php artisan migrate:fresh --seed
+```
 
-## Contributing
+### 3. Acesso à Aplicação
+- **URL da Aplicação**: [http://localhost:8080](http://localhost:8080)
+- **Área do Cliente (Pública)**: Acessível diretamente na raiz `/`.
+- **Painel Interno (Login)**: Acessível na rota `/login` (ou através do link no portal do cliente).
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+---
 
-## Code of Conduct
+## 👥 Credenciais de Teste (Senha Padrão: `password`)
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+O banco local possui os seguintes perfis cadastrados para simulação de fluxo operacional:
 
-## Security Vulnerabilities
+| Perfil | Usuário | Função |
+| :--- | :--- | :--- |
+| **Estoque** | `estoque@tracking.com` | Emite entregas, seleciona tipo de frete e preenche endereço. |
+| **Compras** | `compras@tracking.com` | Solicita coletas do Protheus e agenda data/horário e local. |
+| **Logística** | `logistica@tracking.com` | Roteiriza entregas/coletas, associa motoristas e gera etiquetas de QR Code. |
+| **Motorista** | `motorista@tracking.com` | Visualiza tarefas no celular, simula leitura de QR Code com GPS automático. |
+| **Diretoria** | `diretoria@tracking.com` | Visão analítica de KPIs, volumetria e histórico com mapa geográfico. |
+| **Administrador** | `admin@tracking.com` | Acesso total e gerenciamento de usuários. |
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+---
 
-## License
+## 📍 Recursos e Recursos Especiais
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+1. **Auto-preenchimento de Endereço por CEP**: Integração nativa com a API ViaCEP em JavaScript nos formulários de Compras e Estoque.
+2. **Transições Inteligentes no Motorista**: O motorista apenas escaneia/informa o QR Code e o sistema automaticamente atualiza o status correto baseado na etapa (`Pendente` $\to$ `Em Transporte` $\to$ `Concluído`) sem necessidade de interação extra do usuário.
+3. **Geolocalização Ativa (GPS)**: Utiliza a Geolocation API do navegador do motorista na confirmação do QR Code e salva as coordenadas geográficas na linha do tempo da operação.
+4. **Links Diretos p/ Google Maps**: A Diretoria e o Cliente Final conseguem clicar no histórico de status e abrir a rota exata de onde o motorista coletou ou entregou o pedido.
