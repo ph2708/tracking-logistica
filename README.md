@@ -98,3 +98,18 @@ Sempre que alterar variáveis de ambiente no `.env` ou atualizar templates Blade
 docker compose exec app php artisan config:clear
 docker compose exec app php artisan view:clear
 ```
+### 5. Recriar
+```# 1. Derruba e apaga o volume antigo que salvou a senha com aspas
+docker compose down -v
+
+# 2. Sobe novamente
+docker compose up -d
+
+# 3. Aguarda 15 segundos para o MySQL inicializar
+sleep 15
+
+# 4. Limpa o cache, gera chave e executa as migrações
+docker compose exec app php artisan config:clear
+docker compose exec app php artisan key:generate
+docker compose exec app php artisan migrate:fresh --seed
+```
