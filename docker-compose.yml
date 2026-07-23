@@ -1,0 +1,47 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: tracking-logistica-app
+    restart: unless-stopped
+    working_dir: /var/webapps
+    volumes:
+      - .:/var/webapps
+    networks:
+      - tracking-network
+
+  web:
+    image: nginx:alpine
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/var/webapps
+      - .docker/nginx:/etc/nginx/conf.d
+    depends_on:
+      - app
+    networks:
+      - tracking-network
+
+  db:
+    image: mysql:8.0
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: tracking_dashboard
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_PASSWORD: root
+    volumes:
+      - db-data:/var/lib/mysql
+    networks:
+      - tracking-network
+
+networks:
+  tracking-network:
+    driver: bridge
+
+volumes:
+  db-data:
+    driver: local
