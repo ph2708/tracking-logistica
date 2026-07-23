@@ -213,6 +213,11 @@
     let html5QrCode;
 
     function startCameraScanner() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            alert("Acesso à câmera indisponível. Dispositivos móveis (iOS/Android) exigem por segurança que o site utilize conexão segura HTTPS para acessar a câmera.");
+            return;
+        }
+
         document.getElementById('reader').style.display = 'block';
         document.getElementById('btn-start-camera').style.display = 'none';
         document.getElementById('btn-stop-camera').style.display = 'block';
