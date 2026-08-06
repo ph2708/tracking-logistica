@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('type'); // 'entrega' or 'coleta'
             $table->string('order_number')->index(); // Purchase/Sales Order number
+            $table->string('branch')->nullable()->index(); // Branch/Filial of the order
             $table->string('status'); // pendente_roteirizacao, pendente_coleta, pendente_entrega, em_transporte, entregue, coletado, finalizada
             $table->text('observations_origin')->nullable(); // estoque or compras observations
             $table->text('observations_logistics')->nullable();

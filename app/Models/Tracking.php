@@ -9,6 +9,7 @@ class Tracking extends Model
     protected $fillable = [
         'type',
         'order_number',
+        'branch',
         'status',
         'observations_origin',
         'observations_logistics',

@@ -126,6 +126,7 @@ return [
             'prefix_indexes' => true,
             'encrypt' => 'no',
             'trust_server_certificate' => 'true',
+            'login_timeout' => 3, // Fail fast in 3 seconds if database or VPN is offline
         ],
 
     ],

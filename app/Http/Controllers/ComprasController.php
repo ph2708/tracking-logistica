@@ -33,15 +33,13 @@ class ComprasController extends Controller
                 return $this->getMockOrder($orderNumber);
             }
 
-            $firstItem = $items->first();
-
             return response()->json([
                 'success' => true,
                 'is_mock' => false,
-                'order_number' => trim($firstItem->C7_NUM),
-                'supplier_code' => trim($firstItem->C7_FORNECE),
-                'supplier_store' => trim($firstItem->C7_LOJA),
-                'emission_date' => $firstItem->C7_EMISSAO,
+                'order_number' => trim($items->first()->C7_NUM),
+                'supplier_code' => trim($items->first()->C7_FORNECE),
+                'supplier_store' => trim($items->first()->C7_LOJA),
+                'emission_date' => $items->first()->C7_EMISSAO,
                 'items' => $items->map(function($item) {
                     return [
                         'item' => trim($item->C7_ITEM),
@@ -49,6 +47,7 @@ class ComprasController extends Controller
                         'description' => trim($item->C7_DESCRI),
                         'quantity' => floatval($item->C7_QUANT),
                         'value' => floatval($item->C7_TOTAL),
+                        'branch' => trim($item->C7_FILIAL),
                     ];
                 })
             ]);
@@ -63,6 +62,7 @@ class ComprasController extends Controller
     {
         $request->validate([
             'order_number' => 'required|string',
+            'branch' => 'nullable|string',
             'observations_origin' => 'nullable|string',
             'collection_cep' => 'required|string',
             'collection_street' => 'required|string|max:255',
@@ -73,9 +73,13 @@ class ComprasController extends Controller
             'collection_schedule' => 'required|date',
         ]);
 
-        $existing = Tracking::where('order_number', $request->order_number)->where('type', 'coleta')->first();
+        $existing = Tracking::where('order_number', $request->order_number)
+            ->where('branch', $request->branch)
+            ->where('type', 'coleta')
+            ->first();
+            
         if ($existing) {
-            return redirect()->route('compras.dashboard')->with('error', 'Já existe um rastreamento iniciado para este Pedido de Compra.');
+            return redirect()->route('compras.dashboard')->with('error', 'Já existe um rastreamento iniciado para este Pedido de Compra nesta filial.');
         }
 
         // Construct full address string
@@ -94,6 +98,7 @@ class ComprasController extends Controller
         $tracking = Tracking::create([
             'type' => 'coleta',
             'order_number' => $request->order_number,
+            'branch' => $request->branch,
             'status' => 'pendente_roteirizacao',
             'observations_origin' => $request->observations_origin,
             'collection_address' => $collectionAddress,
@@ -125,14 +130,16 @@ class ComprasController extends Controller
                     'product' => 'MAT-IND-001',
                     'description' => 'MATERIA PRIMA SIMULADA COMPRA',
                     'quantity' => 100,
-                    'value' => 25000.00
+                    'value' => 25000.00,
+                    'branch' => '01',
                 ],
                 [
                     'item' => '02',
                     'product' => 'MAT-IND-002',
                     'description' => 'INSUMO SIMULADO COMPRA',
                     'quantity' => 50,
-                    'value' => 12500.00
+                    'value' => 12500.00,
+                    'branch' => '02',
                 ]
             ]
         ]);

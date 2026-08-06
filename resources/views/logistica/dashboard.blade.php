@@ -105,6 +105,7 @@
                 <thead>
                     <tr>
                         <th>Pedido</th>
+                        <th>Filial</th>
                         <th>Endereço Coleta</th>
                         <th>Agendamento</th>
                         <th>Motorista Atribuído</th>
@@ -116,6 +117,7 @@
                     @forelse($coletas as $c)
                         <tr>
                             <td><strong>{{ $c->order_number }}</strong></td>
+                            <td>{{ $c->branch ?? 'Todas' }}</td>
                             <td>{{ $c->collection_address }}</td>
                             <td>{{ $c->collection_schedule->format('d/m/Y H:i') }}</td>
                             <td>{{ $c->driver ? $c->driver->name : 'Nenhum' }}</td>
@@ -165,6 +167,7 @@
                  <thead>
                     <tr>
                         <th>Pedido</th>
+                        <th>Filial</th>
                         <th>Transporte</th>
                         <th>Detalhes Transporte</th>
                         <th>Endereço Entrega</th>
@@ -177,6 +180,7 @@
                     @forelse($entregas as $e)
                         <tr>
                             <td><strong>{{ $e->order_number }}</strong></td>
+                            <td>{{ $e->branch ?? 'Todas' }}</td>
                             <td style="text-transform: capitalize;">{{ $e->transport_type }}</td>
                             <td>
                                 @if($e->transport_type === 'proprio')

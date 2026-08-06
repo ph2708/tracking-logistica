@@ -79,6 +79,12 @@
     <div class="glass-card">
         <h2 style="font-size: 1.25rem; margin-bottom: 1.5rem;">Iniciar Rastreamento de Pedido de Venda</h2>
         
+        <!-- Dynamic Alert Message -->
+        <div id="dynamic-alert" class="alert alert-danger" style="display: none; margin-bottom: 1.5rem;">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <span id="dynamic-alert-message"></span>
+        </div>
+
         <!-- Search bar -->
         <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem;">
             <input type="text" id="search-order-input" class="form-control" placeholder="Número do Pedido de Venda Protheus">
@@ -255,10 +261,23 @@
 
 @section('scripts')
 <script>
+    function showAlert(message) {
+        const alertEl = document.getElementById('dynamic-alert');
+        const messageEl = document.getElementById('dynamic-alert-message');
+        messageEl.innerText = message;
+        alertEl.style.display = 'flex';
+        alertEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function hideAlert() {
+        document.getElementById('dynamic-alert').style.display = 'none';
+    }
+
     function searchSalesOrder() {
+        hideAlert();
         const orderNumber = document.getElementById('search-order-input').value.trim();
         if (!orderNumber) {
-            alert('Por favor, informe o número do pedido de venda.');
+            showAlert('Por favor, informe o número do pedido de venda.');
             return;
         }
 
@@ -266,11 +285,14 @@
         document.getElementById('order-details').style.display = 'none';
 
         fetch(`/estoque/search?order_number=${orderNumber}`)
-            .then(res => res.json())
+            .then(res => {
+                if (!res.ok) throw new Error('Erro na resposta do servidor.');
+                return res.json();
+            })
             .then(data => {
                 document.getElementById('search-loading').style.display = 'none';
                 if (data.error) {
-                    alert(data.error);
+                    showAlert(data.error);
                     return;
                 }
 
@@ -311,7 +333,7 @@
             })
             .catch(err => {
                 document.getElementById('search-loading').style.display = 'none';
-                alert('Erro ao consultar o Protheus. Tente novamente.');
+                showAlert('Erro ao consultar o Protheus. Tente novamente.');
                 console.error(err);
             });
     }
@@ -353,8 +375,9 @@
                         document.getElementById('delivery_city').value = data.localidade;
                         document.getElementById('delivery_state').value = data.uf;
                         document.getElementById('delivery_number').focus();
+                        hideAlert();
                     } else {
-                        alert('CEP não encontrado.');
+                        showAlert('CEP não encontrado.');
                     }
                 })
                 .catch(err => console.error('Erro ao buscar CEP:', err));
