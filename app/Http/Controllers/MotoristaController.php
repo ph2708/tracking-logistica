@@ -35,6 +35,8 @@ class MotoristaController extends Controller
             'longitude' => 'nullable|numeric',
             'product_code_validation' => 'nullable|string',
             'photo_product' => 'nullable|image|max:10240',
+            'photo_product_2' => 'nullable|image|max:10240',
+            'photo_product_3' => 'nullable|image|max:10240',
             'photo_invoice' => 'nullable|image|max:10240',
         ]);
 
@@ -50,6 +52,8 @@ class MotoristaController extends Controller
         $newStatus = $tracking->status;
 
         $photoProductPath = null;
+        $photoProduct2Path = null;
+        $photoProduct3Path = null;
         $photoInvoicePath = null;
 
         if ($tracking->status === 'pendente_entrega' || $tracking->status === 'pendente_coleta') {
@@ -63,6 +67,8 @@ class MotoristaController extends Controller
             $request->validate([
                 'product_code_validation' => 'required|string',
                 'photo_product' => 'required|image|max:10240',
+                'photo_product_2' => 'nullable|image|max:10240',
+                'photo_product_3' => 'nullable|image|max:10240',
                 'photo_invoice' => 'required|image|max:10240',
             ]);
 
@@ -101,6 +107,12 @@ class MotoristaController extends Controller
             if ($request->hasFile('photo_product')) {
                 $photoProductPath = $request->file('photo_product')->store('deliveries/products', 'public');
             }
+            if ($request->hasFile('photo_product_2')) {
+                $photoProduct2Path = $request->file('photo_product_2')->store('deliveries/products', 'public');
+            }
+            if ($request->hasFile('photo_product_3')) {
+                $photoProduct3Path = $request->file('photo_product_3')->store('deliveries/products', 'public');
+            }
             if ($request->hasFile('photo_invoice')) {
                 $photoInvoicePath = $request->file('photo_invoice')->store('deliveries/invoices', 'public');
             }
@@ -110,6 +122,8 @@ class MotoristaController extends Controller
                 'status' => $newStatus,
                 'completion_time' => now(),
                 'delivery_photo_product' => $photoProductPath,
+                'delivery_photo_product_2' => $photoProduct2Path,
+                'delivery_photo_product_3' => $photoProduct3Path,
                 'delivery_photo_invoice' => $photoInvoicePath,
             ]);
         } else {

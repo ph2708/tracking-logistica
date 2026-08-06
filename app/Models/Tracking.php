@@ -27,6 +27,8 @@ class Tracking extends Model
         'departure_time',
         'completion_time',
         'delivery_photo_product',
+        'delivery_photo_product_2',
+        'delivery_photo_product_3',
         'delivery_photo_invoice',
     ];
 

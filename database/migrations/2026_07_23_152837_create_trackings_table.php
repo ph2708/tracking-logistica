@@ -33,6 +33,8 @@ return new class extends Migration
             $table->datetime('departure_time')->nullable();
             $table->datetime('completion_time')->nullable();
             $table->string('delivery_photo_product')->nullable();
+            $table->string('delivery_photo_product_2')->nullable();
+            $table->string('delivery_photo_product_3')->nullable();
             $table->string('delivery_photo_invoice')->nullable();
             $table->timestamps();
         });

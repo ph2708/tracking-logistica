@@ -69,7 +69,7 @@ class EstoqueController extends Controller
             'delivery_neighborhood' => 'required|string|max:100',
             'delivery_city' => 'required|string|max:100',
             'delivery_state' => 'required|string|max:2',
-            'departure_time' => 'required_if:transport_type,proprio|nullable|date',
+            'departure_time' => 'required_if:transport_type,proprio|nullable|date|after_or_equal:today',
             'dimensions' => 'required_if:transport_type,terceirizado|nullable|string',
             'weight' => 'required_if:transport_type,terceirizado|nullable|numeric',
             'value' => 'required_if:transport_type,terceirizado|nullable|numeric',

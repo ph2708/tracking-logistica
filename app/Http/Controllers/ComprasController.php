@@ -70,7 +70,7 @@ class ComprasController extends Controller
             'collection_neighborhood' => 'required|string|max:100',
             'collection_city' => 'required|string|max:100',
             'collection_state' => 'required|string|max:2',
-            'collection_schedule' => 'required|date',
+            'collection_schedule' => 'required|date|after_or_equal:today',
         ]);
 
         $existing = Tracking::where('order_number', $request->order_number)

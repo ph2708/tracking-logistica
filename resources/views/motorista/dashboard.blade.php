@@ -99,58 +99,78 @@
 <div class="motorista-container">
     <h1 class="page-title"><i class="bi bi-person-badge-fill"></i> Painel do Motorista</h1>
 
-    <!-- QR scanner card -->
-    <div class="glass-card scan-box">
-        <div class="scan-icon">
-            <i class="bi bi-qr-code-scan"></i>
-        </div>
-        <h2 style="font-size: 1.1rem; margin-bottom: 1.5rem;">Escanear QR Code</h2>
-
-        <!-- Camera Scanner view -->
-        <div id="reader" style="width: 100%; max-width: 100%; border-radius: 12px; margin-bottom: 1.5rem; display: none; overflow: hidden; border: 1px solid var(--border-color); background: rgba(0,0,0,0.4);"></div>
-
-        <button type="button" id="btn-start-camera" class="btn-primary" style="width: 100%; margin-bottom: 1rem;" onclick="startCameraScanner()">
-            <i class="bi bi-camera-fill"></i> Iniciar Câmera / Escanear
-        </button>
-        
-        <button type="button" id="btn-stop-camera" class="btn-secondary" style="width: 100%; margin-bottom: 1rem; display: none;" onclick="stopCameraScanner()">
-            <i class="bi bi-camera-video-off-fill"></i> Parar Câmera
-        </button>
-
-        <form action="{{ route('motorista.scan') }}" method="POST" id="scan-form" enctype="multipart/form-data">
-            @csrf
-            <input type="hidden" name="latitude" id="driver-lat">
-            <input type="hidden" name="longitude" id="driver-lng">
-            <input type="hidden" name="qrcode_token" id="qrcode_token" required>
+    <!-- Scanner Modal (Hidden by default) -->
+    <div id="scanner-modal" class="modal" style="display: none;">
+        <div class="glass-card modal-content" style="max-width: 500px; width: 90%; padding: 1.5rem; margin: auto; position: relative;">
+            <h3 id="modal-task-title" style="font-size: 1.1rem; color: var(--accent-blue); margin-bottom: 1rem;"><i class="bi bi-qr-code-scan"></i> Atendimento de Pedido</h3>
             
-            <div id="validation-fields" style="display: none; border-top: 1px solid var(--border-color); padding-top: 1.5rem; margin-top: 1rem;">
-                <h4 style="font-size: 1rem; color: var(--accent-blue); margin-bottom: 1rem; text-align: center;"><i class="bi bi-shield-check"></i> Comprovação Obrigatória</h4>
-                
-                <div class="form-group">
-                    <label for="product_code_validation" class="form-label">Validar Código do Produto</label>
-                    <input type="text" name="product_code_validation" id="product_code_validation" class="form-control" placeholder="Digite o código do produto para conferência">
-                </div>
-
-                <div class="form-group">
-                    <label for="photo_product" class="form-label">Foto do Produto (Volume)</label>
-                    <input type="file" name="photo_product" id="photo_product" class="form-control" accept="image/*" capture="environment">
-                </div>
-
-                <div class="form-group">
-                    <label for="photo_invoice" class="form-label">Foto da Nota Fiscal</label>
-                    <input type="file" name="photo_invoice" id="photo_invoice" class="form-control" accept="image/*" capture="environment">
-                </div>
+            <!-- Dynamic Alert Message inside Modal -->
+            <div id="modal-alert" class="alert alert-danger" style="display: none; margin-bottom: 1rem; padding: 0.75rem 1rem; font-size: 0.85rem;">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <span id="modal-alert-message"></span>
             </div>
 
-            <!-- Action Button -->
-            <button type="submit" id="btn-submit-scan" class="btn-primary" style="width: 100%; margin-top: 1rem; display: none;">
-                <i class="bi bi-check-circle-fill"></i> Registrar e Baixar Operação
+            <!-- Camera View -->
+            <div id="modal-reader" style="width: 100%; max-width: 100%; border-radius: 12px; margin-bottom: 1rem; overflow: hidden; border: 1px solid var(--border-color); background: rgba(0,0,0,0.4); display: none;"></div>
+            
+            <div id="camera-instructions" style="text-align: center; margin-bottom: 1rem; color: var(--text-secondary); font-size: 0.9rem;">
+                <p>Clique abaixo para abrir a câmera e escanear o QR Code de confirmação.</p>
+            </div>
+
+            <button type="button" id="btn-modal-start-camera" class="btn-primary" style="width: 100%; margin-bottom: 1rem;" onclick="startModalCamera()">
+                <i class="bi bi-camera-fill"></i> Abrir Câmera & Escanear
             </button>
-            
-            <div id="manual-notice" style="text-align: center; margin-top: 1rem; font-size: 0.8rem; color: var(--text-secondary);">
-                <i class="bi bi-info-circle"></i> Leitura manual desativada para motoristas. Caso precise dar baixa manual, solicite remotamente à equipe de Logística.
-            </div>
-        </form>
+            <button type="button" id="btn-modal-stop-camera" class="btn-secondary" style="width: 100%; margin-bottom: 1rem; display: none;" onclick="stopModalCamera()">
+                <i class="bi bi-camera-video-off-fill"></i> Parar Câmera
+            </button>
+
+            <!-- Form -->
+            <form action="{{ route('motorista.scan') }}" method="POST" id="scan-form" enctype="multipart/form-data">
+                @csrf
+                <input type="hidden" name="latitude" id="driver-lat">
+                <input type="hidden" name="longitude" id="driver-lng">
+                <input type="hidden" name="qrcode_token" id="qrcode_token">
+
+                <!-- Verification Message (shown when QR code matches) -->
+                <div id="qr-matched-success" class="alert alert-success" style="display: none; margin-bottom: 1rem; padding: 0.75rem 1rem; font-size: 0.85rem;">
+                    <i class="bi bi-check-circle-fill"></i>
+                    <span>QR Code verificado com sucesso!</span>
+                </div>
+
+                <!-- Validation Fields (shown for em_transporte state) -->
+                <div id="validation-fields" style="display: none; border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: 1rem;">
+                    <h4 style="font-size: 0.9rem; color: var(--accent-blue); margin-bottom: 1rem; text-align: center;"><i class="bi bi-shield-check"></i> Comprovação Obrigatória</h4>
+                    
+                    <div class="form-group">
+                        <label for="product_code_validation" class="form-label">Código de Produto para Conferência</label>
+                        <input type="text" name="product_code_validation" id="product_code_validation" class="form-control" placeholder="Digite o código do produto para conferência">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="photo_invoice" class="form-label">Foto da Nota Fiscal</label>
+                        <input type="file" name="photo_invoice" id="photo_invoice" class="form-control" accept="image/*" capture="environment">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Fotos do Produto (Volume) - Até 3 fotos</label>
+                        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                            <input type="file" name="photo_product" id="photo_product" class="form-control" accept="image/*" capture="environment" placeholder="Foto 1 (Obrigatória)">
+                            <input type="file" name="photo_product_2" id="photo_product_2" class="form-control" accept="image/*" capture="environment" placeholder="Foto 2 (Opcional)">
+                            <input type="file" name="photo_product_3" id="photo_product_3" class="form-control" accept="image/*" capture="environment" placeholder="Foto 3 (Opcional)">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" id="btn-submit-scan" class="btn-primary" style="width: 100%; margin-top: 1rem; display: none;">
+                    <i class="bi bi-check-circle-fill"></i> Confirmar Operação
+                </button>
+            </form>
+
+            <button type="button" class="btn-secondary" style="width: 100%; margin-top: 0.5rem;" onclick="closeScannerModal()">
+                Cancelar / Fechar
+            </button>
+        </div>
     </div>
 
     <!-- Active Tasks -->
@@ -178,8 +198,8 @@
             @endif
 
             <div class="task-actions">
-                <button class="btn-secondary btn-scan-trigger" data-token="{{ $t->qrcode_token }}" data-status="{{ $t->status }}" onclick="prefillScanner('{{ $t->qrcode_token }}', '{{ $t->status }}')" style="font-size: 0.875rem; padding: 0.4rem 0.8rem; flex: 1;">
-                    <i class="bi bi-qr-code"></i> Ler QR Code
+                <button class="btn-secondary btn-scan-trigger" data-token="{{ $t->qrcode_token }}" data-status="{{ $t->status }}" onclick="openScannerModal('{{ $t->qrcode_token }}', '{{ $t->status }}', '{{ $t->order_number }}')" style="font-size: 0.875rem; padding: 0.4rem 0.8rem; flex: 1;">
+                    <i class="bi bi-qr-code"></i> Iniciar Atendimento
                 </button>
             </div>
         </div>
@@ -211,35 +231,80 @@
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 <script>
     let html5QrCode;
+    window.targetToken = null;
+    window.targetStatus = null;
+    window.targetOrderNumber = null;
 
-    function startCameraScanner() {
+    function showModalAlert(message) {
+        const alertEl = document.getElementById('modal-alert');
+        const messageEl = document.getElementById('modal-alert-message');
+        messageEl.innerText = message;
+        alertEl.style.display = 'flex';
+    }
+
+    function hideModalAlert() {
+        document.getElementById('modal-alert').style.display = 'none';
+    }
+
+    function openScannerModal(token, status, orderNumber) {
+        window.targetToken = token;
+        window.targetStatus = status;
+        window.targetOrderNumber = orderNumber;
+
+        document.getElementById('modal-task-title').innerHTML = `<i class="bi bi-qr-code-scan"></i> Pedido ${orderNumber}`;
+        document.getElementById('qrcode_token').value = '';
+        
+        // Hide success message, form fields and submit button initially
+        document.getElementById('qr-matched-success').style.display = 'none';
+        document.getElementById('validation-fields').style.display = 'none';
+        document.getElementById('btn-submit-scan').style.display = 'none';
+        
+        hideModalAlert();
+
+        // Show start camera button and instructions
+        document.getElementById('btn-modal-start-camera').style.display = 'block';
+        document.getElementById('camera-instructions').style.display = 'block';
+        document.getElementById('btn-modal-stop-camera').style.display = 'none';
+        document.getElementById('modal-reader').style.display = 'none';
+
+        // Display modal
+        document.getElementById('scanner-modal').style.display = 'flex';
+    }
+
+    function closeScannerModal() {
+        stopModalCamera();
+        document.getElementById('scanner-modal').style.display = 'none';
+    }
+
+    function startModalCamera() {
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            alert("Acesso à câmera indisponível. Dispositivos móveis (iOS/Android) exigem por segurança que o site utilize conexão segura HTTPS para acessar a câmera.");
+            showAlertGlobal("Acesso à câmera indisponível. Dispositivos móveis exigem HTTPS por segurança.");
             return;
         }
 
-        document.getElementById('reader').style.display = 'block';
-        document.getElementById('btn-start-camera').style.display = 'none';
-        document.getElementById('btn-stop-camera').style.display = 'block';
+        document.getElementById('modal-reader').style.display = 'block';
+        document.getElementById('btn-modal-start-camera').style.display = 'none';
+        document.getElementById('btn-modal-stop-camera').style.display = 'block';
+        document.getElementById('camera-instructions').style.display = 'none';
 
-        html5QrCode = new Html5Qrcode("reader");
-        const config = { fps: 15, qrbox: { width: 250, height: 250 } };
+        hideModalAlert();
+
+        html5QrCode = new Html5Qrcode("modal-reader");
+        const config = { fps: 15, qrbox: { width: 220, height: 220 } };
 
         html5QrCode.start(
             { facingMode: "environment" }, 
             config,
             (decodedText, decodedResult) => {
-                stopCameraScanner();
-                if (navigator.vibrate) {
-                    navigator.vibrate(200);
-                }
-                
-                // Find matching task card scan trigger button to extract status
-                const btn = Array.from(document.querySelectorAll('.btn-scan-trigger')).find(b => b.dataset.token === decodedText);
-                if (btn) {
-                    prefillScanner(decodedText, btn.dataset.status);
+                if (decodedText.trim() === window.targetToken.trim()) {
+                    // Match!
+                    stopModalCamera();
+                    if (navigator.vibrate) {
+                        navigator.vibrate(200);
+                    }
+                    handleQRMatchSuccess();
                 } else {
-                    alert("Código QR: " + decodedText + " lido. Este pedido não foi localizado em sua lista de tarefas.");
+                    showModalAlert("Código QR incorreto! O código escaneado não corresponde ao pedido selecionado.");
                 }
             },
             (errorMessage) => {
@@ -247,49 +312,58 @@
             }
         ).catch((err) => {
             console.error("Erro ao iniciar a câmera: ", err);
-            alert("Não foi possível acessar a câmera. Verifique se concedeu as permissões necessárias.");
-            stopCameraScanner();
+            showModalAlert("Não foi possível acessar a câmera. Verifique as permissões de vídeo.");
+            stopModalCamera();
         });
     }
 
-    function stopCameraScanner() {
+    function stopModalCamera() {
         if (html5QrCode && html5QrCode.isScanning) {
             html5QrCode.stop().then(() => {
-                document.getElementById('reader').style.display = 'none';
-                document.getElementById('btn-start-camera').style.display = 'block';
-                document.getElementById('btn-stop-camera').style.display = 'none';
+                document.getElementById('modal-reader').style.display = 'none';
+                document.getElementById('btn-modal-start-camera').style.display = 'block';
+                document.getElementById('btn-modal-stop-camera').style.display = 'none';
             }).catch((err) => {
                 console.error("Erro ao parar a câmera: ", err);
             });
         } else {
-            document.getElementById('reader').style.display = 'none';
-            document.getElementById('btn-start-camera').style.display = 'block';
-            document.getElementById('btn-stop-camera').style.display = 'none';
+            document.getElementById('modal-reader').style.display = 'none';
+            document.getElementById('btn-modal-start-camera').style.display = 'block';
+            document.getElementById('btn-modal-stop-camera').style.display = 'none';
         }
     }
 
-    function prefillScanner(token, currentStatus) {
-        document.getElementById('qrcode_token').value = token;
+    function handleQRMatchSuccess() {
+        document.getElementById('qrcode_token').value = window.targetToken;
+        document.getElementById('qr-matched-success').style.display = 'flex';
         
+        // Hide initial instructions and buttons
+        document.getElementById('btn-modal-start-camera').style.display = 'none';
+        document.getElementById('btn-modal-stop-camera').style.display = 'none';
+        document.getElementById('camera-instructions').style.display = 'none';
+
         const validationFields = document.getElementById('validation-fields');
         const submitBtn = document.getElementById('btn-submit-scan');
-        
-        if (currentStatus === 'em_transporte') {
+
+        if (window.targetStatus === 'em_transporte') {
             validationFields.style.display = 'block';
             document.getElementById('product_code_validation').required = true;
             document.getElementById('photo_product').required = true;
             document.getElementById('photo_invoice').required = true;
+            
+            // Photo 2 and 3 are optional, no required attribute
         } else {
             validationFields.style.display = 'none';
             document.getElementById('product_code_validation').required = false;
             document.getElementById('photo_product').required = false;
             document.getElementById('photo_invoice').required = false;
         }
-        
+
         submitBtn.style.display = 'block';
-        
-        // Scroll to scanner
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function showAlertGlobal(msg) {
+        alert(msg);
     }
 
     document.addEventListener("DOMContentLoaded", function() {
