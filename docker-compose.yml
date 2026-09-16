@@ -3,45 +3,47 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: tracking-logistica-app
+    container_name: tracking_logistica_app
     restart: unless-stopped
-    working_dir: /var/webapps
-    volumes:
-      - .:/var/webapps
-    networks:
-      - tracking-network
-
-  web:
-    image: nginx:alpine
-    restart: unless-stopped
+    working_dir: /var/www/html
     ports:
-      - "8080:80"
-    volumes:
-      - .:/var/webapps
-      - .docker/nginx:/etc/nginx/conf.d
+      - "8080:8000"
+    healthcheck:
+      test: ["CMD-SHELL", "php artisan --version || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
     depends_on:
-      - app
+      mysql:
+        condition: service_healthy
     networks:
-      - tracking-network
+      - maquigeral_network
 
-  db:
+  mysql:
     image: mysql:8.0
+    container_name: tracking_logistica_mysql
     restart: unless-stopped
-    ports:
-      - "3306:3306"
     environment:
-      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_DATABASE: tracking_dashboard
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "127.0.0.1:33088:3306"
     volumes:
-      - db-data:/var/lib/mysql
+      - mysql_data:/var/lib/mysql
     networks:
-      - tracking-network
-
-networks:
-  tracking-network:
-    driver: bridge
+      - maquigeral_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
 volumes:
-  db-data:
+  mysql_data:
     driver: local
+
+networks:
+  maquigeral_network:
+    driver: bridge

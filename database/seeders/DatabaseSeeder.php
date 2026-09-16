@@ -27,12 +27,14 @@ class DatabaseSeeder extends Seeder
         ];
 
         foreach ($users as $u) {
-            User::create([
-                'name' => $u['name'],
-                'email' => $u['email'],
-                'password' => bcrypt('password'),
-                'role' => $u['role'],
-            ]);
+            User::firstOrCreate(
+                ['email' => $u['email']],
+                [
+                    'name' => $u['name'],
+                    'password' => bcrypt('password'),
+                    'role' => $u['role'],
+                ]
+            );
         }
     }
 }
